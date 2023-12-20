@@ -1,8 +1,13 @@
 import arc from '@architect/functions';
 
 export async function handler (req) {
+  // see https://arc.codes/docs/en/reference/runtime-helpers/node.js#arc.events
 
-  if(req.queryStringParameters && req.queryStringParameters.site==='hub.innovation.ca.gov') {
+  // if key 'site' is in req.params, then
+
+  // supposed to work based on my read of docs, but does not work
+  // if ('site' in req.query && req.query.site === 'hub.innovation.ca.gov') {
+  if (req.queryStringParameters && req.queryStringParameters.site==='hub.innovation.ca.gov') {
     let sitedomain = 'hub.innovation.ca.gov';
     let data = await arc.tables();
     let result = await data.evaluations.query({
