@@ -10,19 +10,28 @@ export async function handler (req) {
   if (req.queryStringParameters && req.queryStringParameters.site==='hub.innovation.ca.gov') {
     let sitedomain = 'hub.innovation.ca.gov';
     let data = await arc.tables();
-    let result = await data.evaluations.query({
-      KeyConditionExpression: 'sitedomain = :sitedomain',
-      ExpressionAttributeValues: {
-        ':sitedomain': sitedomain
-      }
-    })
+    // Query returns at most 1 MB per call; follow LastEvaluatedKey so the
+    // response always contains the whole partition, not just the first page.
+    let items = [];
+    let ExclusiveStartKey;
+    do {
+      let result = await data.evaluations.query({
+        KeyConditionExpression: 'sitedomain = :sitedomain',
+        ExpressionAttributeValues: {
+          ':sitedomain': sitedomain
+        },
+        ...(ExclusiveStartKey && { ExclusiveStartKey })
+      })
+      items.push(...result.Items);
+      ExclusiveStartKey = result.LastEvaluatedKey;
+    } while (ExclusiveStartKey);
     return {
       statusCode: 200,
       headers: {
         'cache-control': 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0',
         'content-type': 'application/json; charset=utf8'
       },
-      body:JSON.stringify(result.Items)
+      body:JSON.stringify(items)
     }
 
   } else {
